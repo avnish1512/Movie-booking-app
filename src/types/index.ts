@@ -31,4 +31,6 @@ export interface Showtime {
 }
 
 export type ViewMode = 'map' | 'transitioning' | 'view3d' | 'booking';
+export type CameraPerspective = 'pov' | 'auditorium';
+
 

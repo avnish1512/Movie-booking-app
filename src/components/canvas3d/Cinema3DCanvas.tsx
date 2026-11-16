@@ -1,13 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { CinemaAuditorium } from './CinemaAuditorium';
 import { CameraController } from './CameraController';
-import { SeatData, ViewMode } from '../../types';
+import { SeatData, ViewMode, CameraPerspective } from '../../types';
 
 interface Cinema3DCanvasProps {
   seats: SeatData[];
   selectedSeat: SeatData | null;
   viewMode: ViewMode;
+  cameraPerspective?: CameraPerspective;
   onSeatSelect: (seat: SeatData) => void;
 }
 
@@ -15,31 +16,45 @@ export const Cinema3DCanvas: React.FC<Cinema3DCanvasProps> = ({
   seats,
   selectedSeat,
   viewMode,
+  cameraPerspective = 'pov',
   onSeatSelect,
 }) => {
   const [interactiveLook, setInteractiveLook] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const dragStart = useRef({ x: 0, y: 0 });
+  const hasMoved = useRef(false);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (viewMode !== 'view3d') return;
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    hasMoved.current = false;
     setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
   }, [viewMode]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging || viewMode !== 'view3d') return;
-    const deltaX = (e.clientX - dragStart.x) / 300;
-    const deltaY = (e.clientY - dragStart.y) / 300;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
 
-    setInteractiveLook({
-      x: Math.max(-1, Math.min(1, deltaX)),
-      y: Math.max(-0.6, Math.min(0.6, deltaY)),
-    });
-  }, [isDragging, dragStart, viewMode]);
+    // Filter out micro-movements to preserve clean seat clicking
+    if (Math.hypot(dx, dy) > 6) {
+      hasMoved.current = true;
+    }
+
+    if (hasMoved.current) {
+      const deltaX = dx / 300;
+      const deltaY = dy / 300;
+
+      setInteractiveLook({
+        x: Math.max(-1, Math.min(1, deltaX)),
+        y: Math.max(-0.6, Math.min(0.6, deltaY)),
+      });
+    }
+  }, [isDragging, viewMode]);
 
   const handlePointerUp = useCallback(() => {
     setIsDragging(false);
+    hasMoved.current = false;
     setInteractiveLook({ x: 0, y: 0 });
   }, []);
 
@@ -59,7 +74,7 @@ export const Cinema3DCanvas: React.FC<Cinema3DCanvasProps> = ({
         <color attach="background" args={['#050608']} />
 
         {/* Ambient base lighting illuminating chairs in the dark theater */}
-        <ambientLight intensity={1.2} color="#ffffff" />
+        <ambientLight intensity={1.25} color="#ffffff" />
 
         {/* Overhead Auditorium Light */}
         <directionalLight position={[0, 8, 4]} intensity={1.4} color="#ffffff" />
@@ -75,6 +90,7 @@ export const Cinema3DCanvas: React.FC<Cinema3DCanvasProps> = ({
         <CameraController
           viewMode={viewMode}
           selectedSeat={selectedSeat}
+          cameraPerspective={cameraPerspective}
           interactiveLook={interactiveLook}
         />
 
@@ -83,6 +99,7 @@ export const Cinema3DCanvas: React.FC<Cinema3DCanvasProps> = ({
           seats={seats}
           selectedSeatId={selectedSeat?.id ?? null}
           viewMode={viewMode}
+          cameraPerspective={cameraPerspective}
           onSeatSelect={onSeatSelect}
         />
       </Canvas>

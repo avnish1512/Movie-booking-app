@@ -1,18 +1,20 @@
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
-import { ViewMode, SeatData } from '../../types';
-import { getSeatCameraPosition, ROW_INDEX_MAP } from '../../utils/seating3D';
+import { ViewMode, SeatData, CameraPerspective } from '../../types';
+import { getSeatCameraPosition, getSeatAuditoriumCameraPosition, ROW_INDEX_MAP } from '../../utils/seating3D';
 
 interface CameraControllerProps {
   viewMode: ViewMode;
   selectedSeat: SeatData | null;
+  cameraPerspective?: CameraPerspective;
   interactiveLook?: { x: number; y: number };
 }
 
 export const CameraController: React.FC<CameraControllerProps> = ({
   viewMode,
   selectedSeat,
+  cameraPerspective = 'pov',
   interactiveLook = { x: 0, y: 0 }
 }) => {
   const { camera } = useThree();
@@ -27,37 +29,42 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       targetCamPos.current.set(0, 10.5, 4.5);
       targetLookAt.current.set(0, 1.2, 1.0);
     } else if (viewMode === 'transitioning') {
-      // Mid-transition overhead view: camera reveals the stadium seats and glowing selected seat (matches reference video frame_003)
+      // Stage 1 Transition: Auditorium view behind the glowing selected seat (matches reference video f_0043.jpg and f_0076.jpg)
       if (selectedSeat) {
-        const [x, , z] = getSeatCameraPosition(selectedSeat.row, selectedSeat.number);
-        targetCamPos.current.set(x * 0.4, 8.0, z + 3.8);
-        targetLookAt.current.set(x, 1.2, z);
+        const [x, y, z] = getSeatAuditoriumCameraPosition(selectedSeat.row, selectedSeat.number);
+        targetCamPos.current.set(x, y, z);
+        targetLookAt.current.set(x * 0.15, 1.25, -7.8);
       } else {
-        targetCamPos.current.set(0, 8.5, 3.5);
-        targetLookAt.current.set(0, 1.2, 0);
+        targetCamPos.current.set(0, 4.5, 6.0);
+        targetLookAt.current.set(0, 1.5, -7.8);
       }
     } else if (viewMode === 'view3d') {
-      // First-person seat POV (matches reference video frame_004, frame_013, frame_020)
       if (selectedSeat) {
-        const [x, y, z] = getSeatCameraPosition(selectedSeat.row, selectedSeat.number);
-        targetCamPos.current.set(x, y, z);
+        if (cameraPerspective === 'auditorium') {
+          // Auditorium view from behind the seat: shows the green chair in the foreground and all cascading rows
+          const [x, y, z] = getSeatAuditoriumCameraPosition(selectedSeat.row, selectedSeat.number);
+          targetCamPos.current.set(x, y, z);
+          targetLookAt.current.set(x * 0.15, 1.25, -7.8);
+        } else {
+          // Seated POV: first-person sightline sitting in the chair (matches reference video f_0046.jpg and f_0080.jpg)
+          const [x, y, z] = getSeatCameraPosition(selectedSeat.row, selectedSeat.number);
+          targetCamPos.current.set(x, y, z);
 
-        // Unified slope formula so row in front chairs perfectly frame the bottom across all tiers
-        const rowIndex = ROW_INDEX_MAP[selectedSeat.row] ?? 4;
-        const targetY = 0.85 + (rowIndex / 8) * 0.35;
-
-        targetLookAt.current.set(x * 0.15, targetY, -7.8);
+          const rowIndex = ROW_INDEX_MAP[selectedSeat.row] ?? 4;
+          const targetY = 0.85 + (rowIndex / 8) * 0.35;
+          targetLookAt.current.set(x * 0.15, targetY, -7.8);
+        }
       } else {
         const [x, y, z] = getSeatCameraPosition('E', 7);
         targetCamPos.current.set(x, y, z);
         targetLookAt.current.set(0, 1.05, -7.8);
       }
     }
-  }, [viewMode, selectedSeat]);
+  }, [viewMode, selectedSeat, cameraPerspective]);
 
   useFrame((_, delta) => {
-    // Smooth adaptive interpolation factor
-    const factor = Math.min(delta * 4.8, 0.20);
+    // Smooth adaptive interpolation factor (approx 60fps)
+    const factor = Math.min(delta * 4.6, 0.22);
 
     const lookOffset = new THREE.Vector3(0, 0, 0);
     if (viewMode === 'view3d') {
@@ -75,3 +82,4 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
   return null;
 };
+

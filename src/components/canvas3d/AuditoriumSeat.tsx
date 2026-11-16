@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import * as THREE from 'three';
 
 interface AuditoriumSeatProps {
@@ -13,19 +13,53 @@ interface AuditoriumSeatProps {
 export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
   position,
   isSelected,
+  isTaken,
   isRecliner,
   hideBackrest = false,
   onClick
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const seatMaterial = useMemo(() => {
-    // Selected seat glows vibrant mint green
+    // Selected seat glows vibrant mint green (matches reference video)
     if (isSelected) {
       return new THREE.MeshStandardMaterial({
         color: new THREE.Color('#3ddc97'),
         emissive: new THREE.Color('#3ddc97'),
-        emissiveIntensity: 0.9,
+        emissiveIntensity: 0.95,
         roughness: 0.2,
         metalness: 0.1,
+      });
+    }
+
+    // Taken seats: dimmed charcoal burgundy, indicating occupied
+    if (isTaken) {
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#240c11'),
+        emissive: new THREE.Color('#140508'),
+        emissiveIntensity: 0.2,
+        roughness: 0.8,
+        metalness: 0.05,
+      });
+    }
+
+    // Hovered available seat: brightened velvet feedback
+    if (isHovered) {
+      if (isRecliner) {
+        return new THREE.MeshStandardMaterial({
+          color: new THREE.Color('#b53952'),
+          emissive: new THREE.Color('#781c2f'),
+          emissiveIntensity: 0.75,
+          roughness: 0.45,
+          metalness: 0.05,
+        });
+      }
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color('#eb263c'),
+        emissive: new THREE.Color('#941223'),
+        emissiveIntensity: 0.75,
+        roughness: 0.45,
+        metalness: 0.05,
       });
     }
 
@@ -40,7 +74,7 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
       });
     }
 
-    // Standard rows (A to G) - classic cinema red velvet (all chairs in 3D are red like real cinema)
+    // Standard rows (A to G) - classic cinema red velvet
     return new THREE.MeshStandardMaterial({
       color: new THREE.Color('#c8162b'),
       emissive: new THREE.Color('#6e0c18'),
@@ -48,7 +82,7 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
       roughness: 0.55,
       metalness: 0.05,
     });
-  }, [isSelected, isRecliner]);
+  }, [isSelected, isTaken, isHovered, isRecliner]);
 
   const frameMaterial = useMemo(() => {
     return new THREE.MeshStandardMaterial({
@@ -67,8 +101,42 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
   }, []);
 
   return (
-    <group position={position} onClick={(e) => { e.stopPropagation(); onClick?.(); }}>
-      {/* Plush Backrest (hidden only for currently occupied seat to prevent camera clipping) */}
+    <group position={position}>
+      {/* Invisible bounding hit-box mesh covering the entire chair volume for seamless raycast & clicking */}
+      <mesh
+        position={[0, 0.60, 0.05]}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isTaken && onClick) onClick();
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          if (!isTaken) {
+            setIsHovered(true);
+            document.body.style.cursor = 'pointer';
+          } else {
+            document.body.style.cursor = 'not-allowed';
+          }
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          setIsHovered(false);
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        <boxGeometry args={[0.66, 1.25, 0.66]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+
+      {/* Mint glow puddle on the floor for selected seat */}
+      {isSelected && (
+        <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.01, 0.48, 32]} />
+          <meshBasicMaterial color="#3ddc97" transparent opacity={0.35} />
+        </mesh>
+      )}
+
+      {/* Plush Backrest (hidden only for currently occupied seat in POV to prevent camera clipping) */}
       {!hideBackrest && (
         <>
           <mesh position={[0, 0.74, -0.15]} rotation={[-0.05, 0, 0]} material={seatMaterial} castShadow receiveShadow>
@@ -119,3 +187,4 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
     </group>
   );
 };
+

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
-import { SeatData } from '../../types';
+import { SeatData, CameraPerspective } from '../../types';
 import { ROWS } from '../../data/cinemaData';
 import { AuditoriumSeat } from './AuditoriumSeat';
 import { CinemaScreen } from './CinemaScreen';
@@ -10,6 +10,7 @@ interface CinemaAuditoriumProps {
   seats: SeatData[];
   selectedSeatId: string | null;
   viewMode: 'map' | 'transitioning' | 'view3d' | 'booking';
+  cameraPerspective?: CameraPerspective;
   onSeatSelect: (seat: SeatData) => void;
 }
 
@@ -17,6 +18,7 @@ export const CinemaAuditorium: React.FC<CinemaAuditoriumProps> = ({
   seats,
   selectedSeatId,
   viewMode,
+  cameraPerspective = 'pov',
   onSeatSelect,
 }) => {
   const floorMaterial = useMemo(() => {
@@ -108,6 +110,8 @@ export const CinemaAuditorium: React.FC<CinemaAuditoriumProps> = ({
         const isTaken = seat.status === 'taken';
         const isRecliner = seat.type === 'recliner';
 
+        const hideBackrest = isSelected && viewMode === 'view3d' && cameraPerspective === 'pov';
+
         return (
           <AuditoriumSeat
             key={seat.id}
@@ -115,7 +119,7 @@ export const CinemaAuditorium: React.FC<CinemaAuditoriumProps> = ({
             isSelected={isSelected}
             isTaken={isTaken}
             isRecliner={isRecliner}
-            hideBackrest={isSelected && viewMode === 'view3d'}
+            hideBackrest={hideBackrest}
             onClick={() => {
               if (!isTaken) {
                 onSeatSelect(seat);

@@ -48,3 +48,15 @@ export function getSeatCameraPosition(row: string, seatNum: number): [number, nu
   // Seated eye height: 1.22m above tier floor, positioned at front edge of seat
   return [x, y + 1.22, z - 0.20];
 }
+
+// Camera Auditorium / Behind-the-seat overview position (showing the seat in foreground and hall descending)
+export function getSeatAuditoriumCameraPosition(row: string, seatNum: number): [number, number, number] {
+  const rowIndex = ROW_INDEX_MAP[row] ?? 4;
+  const x = getSeatX(seatNum);
+  // Positioned elevated behind the selected row looking down the stadium rake (matches reference video f_0043.jpg & f_0076.jpg)
+  const targetRowIndex = Math.min(8.7, rowIndex + 1.8);
+  const camY = targetRowIndex * 0.40 + 1.55;
+  const camZ = -2.8 + targetRowIndex * 1.40;
+  return [x, camY, camZ];
+}
+

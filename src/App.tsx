@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ViewMode, SeatData, Showtime } from './types';
+import { ViewMode, SeatData, Showtime, CameraPerspective } from './types';
 import { SHOWTIMES, generateSeatingLayout } from './data/cinemaData';
 import { CinemaHeader } from './components/CinemaHeader';
 import { ShowtimeSelector } from './components/ShowtimeSelector';
@@ -15,6 +15,7 @@ export const App: React.FC = () => {
   const [activeShowtime, setActiveShowtime] = useState<Showtime>(SHOWTIMES[1]); // 19:45 IMAX default
   const [selectedSeatId, setSelectedSeatId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('map');
+  const [cameraPerspective, setCameraPerspective] = useState<CameraPerspective>('pov');
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
 
@@ -29,12 +30,18 @@ export const App: React.FC = () => {
     return seats.find((s) => s.id === selectedSeatId) || null;
   }, [seats, selectedSeatId]);
 
-  // Handle seat click
+  // Handle seat click (supports 2D map, 3D auditorium seats, and mini radar)
   const handleSeatSelect = (seat: SeatData) => {
     if (seat.status === 'taken') return;
+    soundFX.playSeatClick();
     if (selectedSeatId === seat.id) {
-      // Toggle off if already selected
-      setSelectedSeatId(null);
+      // In 2D map mode, toggle off if already selected
+      if (viewMode === 'map') {
+        setSelectedSeatId(null);
+      } else if (viewMode === 'view3d') {
+        // In 3D view mode, tapping the active green seat smoothly toggles between Hall Overview and Seated POV
+        setCameraPerspective((curr) => (curr === 'pov' ? 'auditorium' : 'pov'));
+      }
     } else {
       setSelectedSeatId(seat.id);
     }
@@ -53,14 +60,26 @@ export const App: React.FC = () => {
     }
   };
 
-  // Transition from 2D Map to 3D Auditorium View
+  // Two-Stage Cinematic Transition from 2D Map to 3D Auditorium View
   const handleContinue = () => {
     if (!selectedSeat) return;
     soundFX.playTransition();
+
+    // Stage 1: Auditorium view behind the seat (reveals the glowing green seat & descending hall)
     setViewMode('transitioning');
+    setCameraPerspective('auditorium');
+
+    // Stage 2: Smooth swoop forward into Seated POV and slide bottom sheet up
     setTimeout(() => {
       setViewMode('view3d');
+      setCameraPerspective('pov');
     }, 750);
+  };
+
+  // Toggle camera perspective between Seated POV and Auditorium Hall Overview
+  const handleTogglePerspective = () => {
+    soundFX.playTransition();
+    setCameraPerspective((curr) => (curr === 'pov' ? 'auditorium' : 'pov'));
   };
 
   // Return from 3D Auditorium View back to 2D Map
@@ -98,6 +117,7 @@ export const App: React.FC = () => {
             seats={seats}
             selectedSeat={selectedSeat}
             viewMode={viewMode}
+            cameraPerspective={cameraPerspective}
             onSeatSelect={handleSeatSelect}
           />
         </div>
@@ -149,27 +169,31 @@ export const App: React.FC = () => {
         {/* 3D View Overlays (Header & 3D Bottom Sheet) */}
         {viewMode === 'view3d' && (
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none z-30 animate-in fade-in duration-300">
-            {/* 3D Header with back button */}
+            {/* 3D Header with back button & perspective toggle */}
             <div className="pointer-events-auto w-full">
               <CinemaHeader
                 viewMode="view3d"
                 selectedSeat={selectedSeat}
                 activeShowtime={activeShowtime}
+                cameraPerspective={cameraPerspective}
                 onBack={handleChangeSeat}
                 onInfoClick={() => setIsInfoOpen(true)}
+                onTogglePerspective={handleTogglePerspective}
               />
             </div>
 
-            {/* 3D Bottom Sheet with metrics and radar */}
+            {/* 3D Bottom Sheet with metrics, mini radar & perspective pills */}
             <div className="pointer-events-auto w-full">
               <BottomBookingSheet
                 viewMode="view3d"
                 selectedSeat={selectedSeat}
                 seats={seats}
+                cameraPerspective={cameraPerspective}
                 onSeatSelect={handleSeatSelect}
                 onContinue={handleContinue}
                 onChangeSeat={handleChangeSeat}
                 onBook={handleBook}
+                onTogglePerspective={handleTogglePerspective}
               />
             </div>
           </div>
@@ -194,4 +218,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-

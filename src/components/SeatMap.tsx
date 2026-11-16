@@ -26,8 +26,14 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     return map;
   }, [seats]);
 
+  const [activeRippleSeatId, setActiveRippleSeatId] = React.useState<string | null>(null);
+
   const handleSeatClick = (seat: SeatData) => {
     if (seat.status === 'taken') return;
+    setActiveRippleSeatId(seat.id);
+    setTimeout(() => {
+      setActiveRippleSeatId((current) => (current === seat.id ? null : current));
+    }, 550);
     soundFX.playSeatClick();
     onSeatSelect(seat);
   };
@@ -56,15 +62,20 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     }
 
     return (
-      <button
-        key={seat.id}
-        onClick={() => handleSeatClick(seat)}
-        disabled={isTaken}
-        aria-label={`Row ${seat.row} Seat ${seat.number}${isSelected ? ' (Selected)' : isTaken ? ' (Taken)' : ''}`}
-        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-[4px] sm:rounded-[5px] flex items-center justify-center text-[9px] sm:text-[10px] transition-all duration-200 outline-none ${styling}`}
-      >
-        {isSelected ? seat.number : null}
-      </button>
+      <div key={seat.id} className="relative flex items-center justify-center">
+        {/* Animated Touch Ripple Feedback (matches reference video f_0036.jpg) */}
+        {activeRippleSeatId === seat.id && (
+          <span className="absolute w-8 h-8 rounded-full bg-white/35 border border-white/50 pointer-events-none animate-seat-ripple z-30" />
+        )}
+        <button
+          onClick={() => handleSeatClick(seat)}
+          disabled={isTaken}
+          aria-label={`Row ${seat.row} Seat ${seat.number}${isSelected ? ' (Selected)' : isTaken ? ' (Taken)' : ''}`}
+          className={`w-4 h-4 sm:w-5 sm:h-5 rounded-[4px] sm:rounded-[5px] flex items-center justify-center text-[9px] sm:text-[10px] transition-all duration-200 outline-none ${styling}`}
+        >
+          {isSelected ? seat.number : null}
+        </button>
+      </div>
     );
   };
 

@@ -1,21 +1,25 @@
 import React from 'react';
-import { ChevronLeft, Info } from 'lucide-react';
-import { ViewMode, SeatData, Showtime } from '../types';
+import { ChevronLeft, Info, Eye, Layers } from 'lucide-react';
+import { ViewMode, SeatData, Showtime, CameraPerspective } from '../types';
 
 interface CinemaHeaderProps {
   viewMode: ViewMode;
   selectedSeat: SeatData | null;
   activeShowtime: Showtime;
+  cameraPerspective?: CameraPerspective;
   onBack: () => void;
   onInfoClick: () => void;
+  onTogglePerspective?: () => void;
 }
 
 export const CinemaHeader: React.FC<CinemaHeaderProps> = ({
   viewMode,
   selectedSeat,
   activeShowtime,
+  cameraPerspective = 'pov',
   onBack,
   onInfoClick,
+  onTogglePerspective,
 }) => {
   if (viewMode === 'view3d') {
     return (
@@ -29,16 +33,30 @@ export const CinemaHeader: React.FC<CinemaHeaderProps> = ({
           <ChevronLeft size={20} />
         </button>
 
-        {/* View from seat pill indicator */}
-        <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#18191f]/85 backdrop-blur-md border border-white/10 shadow-lg">
+        {/* View from seat pill indicator - clickable to toggle perspective */}
+        <button
+          onClick={onTogglePerspective}
+          aria-label="Toggle camera perspective"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#18191f]/90 backdrop-blur-md border border-white/10 hover:border-mint/50 shadow-lg active:scale-95 transition-all group"
+        >
           <span className="w-2 h-2 rounded-full bg-mint animate-pulse" />
           <span className="text-xs font-medium text-white/95 tracking-wide">
             View from {selectedSeat?.id || 'Seat'}
           </span>
-        </div>
+          <span className="text-[10px] font-semibold text-mint/90 bg-mint/15 px-1.5 py-0.5 rounded tracking-wide uppercase group-hover:bg-mint group-hover:text-black transition-colors">
+            {cameraPerspective === 'pov' ? 'POV' : 'Hall'}
+          </span>
+        </button>
 
-        {/* Balance space on right */}
-        <div className="w-10" />
+        {/* Perspective toggle icon button (Hall Overview <-> POV) */}
+        <button
+          onClick={onTogglePerspective}
+          aria-label={cameraPerspective === 'pov' ? 'Switch to Auditorium Hall View' : 'Switch to Seated POV'}
+          title={cameraPerspective === 'pov' ? 'Switch to Auditorium Hall View' : 'Switch to Seated POV'}
+          className="w-10 h-10 rounded-full bg-[#1c1d22]/80 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/90 hover:text-mint hover:bg-white/15 active:scale-95 transition-all shadow-lg"
+        >
+          {cameraPerspective === 'pov' ? <Layers size={18} /> : <Eye size={18} />}
+        </button>
       </header>
     );
   }
@@ -75,4 +93,3 @@ export const CinemaHeader: React.FC<CinemaHeaderProps> = ({
     </header>
   );
 };
-
