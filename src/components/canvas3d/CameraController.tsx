@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { ViewMode, SeatData, CameraPerspective } from '../../types';
-import { getSeatCameraPosition, getSeatAuditoriumCameraPosition, ROW_INDEX_MAP } from '../../utils/seating3D';
+import { getSeatCameraPosition, getSeatAuditoriumCameraPosition, getSeat3DPosition, ROW_INDEX_MAP } from '../../utils/seating3D';
 
 interface CameraControllerProps {
   viewMode: ViewMode;
@@ -29,11 +29,14 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       targetCamPos.current.set(0, 10.5, 4.5);
       targetLookAt.current.set(0, 1.2, 1.0);
     } else if (viewMode === 'transitioning') {
-      // Stage 1 Transition: Auditorium view behind the glowing selected seat (matches reference video f_0043.jpg and f_0076.jpg)
+      // Cinematic Swoop Transition directly into Seated POV matching reference image
       if (selectedSeat) {
-        const [x, y, z] = getSeatAuditoriumCameraPosition(selectedSeat.row, selectedSeat.number);
-        targetCamPos.current.set(x, y, z);
-        targetLookAt.current.set(x * 0.15, 1.25, -7.8);
+        const [x, y, z] = getSeat3DPosition(selectedSeat.row, selectedSeat.number);
+        targetCamPos.current.set(x, y + 0.58, z + 0.05);
+
+        const rowIndex = ROW_INDEX_MAP[selectedSeat.row] ?? 5;
+        const targetY = 2.45 + (rowIndex - 5) * 0.15;
+        targetLookAt.current.set(x, targetY, -7.8);
       } else {
         targetCamPos.current.set(0, 4.5, 6.0);
         targetLookAt.current.set(0, 1.5, -7.8);
@@ -41,18 +44,19 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     } else if (viewMode === 'view3d') {
       if (selectedSeat) {
         if (cameraPerspective === 'auditorium') {
-          // Auditorium view from behind the seat: shows the green chair in the foreground and all cascading rows
+          // Auditorium view from behind the seat
           const [x, y, z] = getSeatAuditoriumCameraPosition(selectedSeat.row, selectedSeat.number);
           targetCamPos.current.set(x, y, z);
           targetLookAt.current.set(x * 0.15, 1.25, -7.8);
         } else {
-          // Seated POV: first-person sightline sitting in the chair (matches reference video f_0046.jpg and f_0080.jpg)
-          const [x, y, z] = getSeatCameraPosition(selectedSeat.row, selectedSeat.number);
-          targetCamPos.current.set(x, y, z);
+          // Seated POV: first-person sightline sitting in the chair (1:1 match with reference image)
+          const [x, y, z] = getSeat3DPosition(selectedSeat.row, selectedSeat.number);
+          targetCamPos.current.set(x, y + 0.58, z + 0.05);
 
-          const rowIndex = ROW_INDEX_MAP[selectedSeat.row] ?? 4;
-          const targetY = 0.85 + (rowIndex / 8) * 0.35;
-          targetLookAt.current.set(x * 0.15, targetY, -7.8);
+          const rowIndex = ROW_INDEX_MAP[selectedSeat.row] ?? 5;
+          // Sightline framing IMAX screen in upper half and plush red headrests in lower half
+          const targetY = 2.45 + (rowIndex - 5) * 0.15;
+          targetLookAt.current.set(x, targetY, -7.8);
         }
       } else {
         const [x, y, z] = getSeatCameraPosition('E', 7);

@@ -319,3 +319,4 @@ export const INITIAL_BOOKING_PASSES: BookingPass[] = [
     status: 'confirmed',
   },
 ];
+

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 interface CinemaScreenProps {
@@ -8,21 +8,19 @@ interface CinemaScreenProps {
 
 export const CinemaScreen: React.FC<CinemaScreenProps> = ({
   movieStillUrl = '/assets/movie-still.jpg',
-  movieVideoUrl = '/assets/screen-loop.mp4'
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Parabolic curved IMAX screen
   const geometry = useMemo(() => {
-    const width = 15.0;
-    const height = 7.5;
+    const width = 14.5;
+    const height = 5.8;
     const segmentsX = 40;
     const segmentsY = 1;
     const geom = new THREE.PlaneGeometry(width, height, segmentsX, segmentsY);
     const pos = geom.attributes.position;
     const halfWidth = width / 2;
-    const curveDepth = 1.4;
+    const curveDepth = 1.25;
 
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
@@ -40,45 +38,14 @@ export const CinemaScreen: React.FC<CinemaScreenProps> = ({
     stillTex.colorSpace = THREE.SRGBColorSpace;
     stillTex.generateMipmaps = true;
 
-    if (typeof document !== 'undefined') {
-      const vid = document.createElement('video');
-      vid.src = movieVideoUrl;
-      vid.crossOrigin = 'anonymous';
-      vid.loop = true;
-      vid.muted = true;
-      vid.playsInline = true;
-      vid.autoplay = true;
-
-      vid.play().then(() => {
-        const vidTex = new THREE.VideoTexture(vid);
-        vidTex.colorSpace = THREE.SRGBColorSpace;
-        if (meshRef.current) {
-          (meshRef.current.material as THREE.MeshBasicMaterial).map = vidTex;
-          (meshRef.current.material as THREE.MeshBasicMaterial).needsUpdate = true;
-        }
-      }).catch(() => {
-        // Fallback silently to still image
-      });
-      videoRef.current = vid;
-    }
-
     return new THREE.MeshBasicMaterial({
       map: stillTex,
       side: THREE.FrontSide,
     });
-  }, [movieStillUrl, movieVideoUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.src = '';
-      }
-    };
-  }, []);
+  }, [movieStillUrl]);
 
   return (
-    <group position={[0, 4.0, -7.8]}>
+    <group position={[0, 4.15, -7.8]}>
       {/* Curved Screen Display */}
       <mesh ref={meshRef} geometry={geometry} material={screenMaterial} />
 

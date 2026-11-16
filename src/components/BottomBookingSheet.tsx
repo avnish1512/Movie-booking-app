@@ -91,42 +91,8 @@ export const BottomBookingSheet: React.FC<BottomBookingSheetProps> = ({
           </div>
         ) : (
           <div className="animate-in fade-in duration-200">
-            {/* View Perspective Selector Pills */}
-            <div className="flex items-center justify-between mb-3.5">
-              <div className="flex items-center gap-1 p-1 bg-white/5 rounded-full border border-white/10">
-                <button
-                  onClick={() => {
-                    if (cameraPerspective !== 'pov' && onTogglePerspective) onTogglePerspective();
-                  }}
-                  className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                    cameraPerspective === 'pov'
-                      ? 'bg-mint text-black font-semibold shadow-sm'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  👁️ Seat POV
-                </button>
-                <button
-                  onClick={() => {
-                    if (cameraPerspective !== 'auditorium' && onTogglePerspective) onTogglePerspective();
-                  }}
-                  className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                    cameraPerspective === 'auditorium'
-                      ? 'bg-mint text-black font-semibold shadow-sm'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  🪑 Hall View
-                </button>
-              </div>
-
-              <span className="text-[10px] text-white/40 uppercase tracking-wider font-mono">
-                Click 3D seat to switch
-              </span>
-            </div>
-
             {/* Header & Mini Radar */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
               <div>
                 {/* Tag (UP CLOSE, SWEET SPOT, FULL PICTURE) */}
                 <span className="text-[11px] font-semibold text-mint tracking-wider uppercase block mb-0.5">

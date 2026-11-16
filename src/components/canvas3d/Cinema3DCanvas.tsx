@@ -67,20 +67,20 @@ export const Cinema3DCanvas: React.FC<Cinema3DCanvasProps> = ({
       onPointerLeave={handlePointerUp}
     >
       <Canvas
-        camera={{ position: [0, 10.5, 4.5], fov: 64, near: 0.1, far: 50 }}
+        camera={{ position: [0, 10.5, 4.5], fov: 60, near: 0.1, far: 50 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         dpr={[1, 2]}
       >
         <color attach="background" args={['#050608']} />
 
         {/* Ambient base lighting illuminating chairs in the dark theater */}
-        <ambientLight intensity={1.25} color="#ffffff" />
+        <ambientLight intensity={1.15} color="#ffffff" />
 
         {/* Overhead Auditorium Light */}
-        <directionalLight position={[0, 8, 4]} intensity={1.4} color="#ffffff" />
+        <directionalLight position={[0, 8, 4]} intensity={1.2} color="#ffffff" />
 
         {/* Light illuminating the seat backs facing the audience */}
-        <directionalLight position={[0, 4, 9]} intensity={1.6} color="#ffffff" />
+        <directionalLight position={[0, 4, 9]} intensity={1.3} color="#ffffff" />
 
         {/* Soft Warm Side Wall Lights */}
         <directionalLight position={[-6, 6, 2]} intensity={0.8} color="#ffd8b3" />

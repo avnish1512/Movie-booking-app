@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import * as THREE from 'three';
+import { RoundedBox } from '@react-three/drei';
 
 interface AuditoriumSeatProps {
   position: [number, number, number];
@@ -32,13 +33,13 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
       });
     }
 
-    // Taken seats: dimmed charcoal burgundy, indicating occupied
+    // Taken seats in the 3D auditorium: classic cinema red velvet with realistic theater dimming
     if (isTaken) {
       return new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#240c11'),
-        emissive: new THREE.Color('#140508'),
-        emissiveIntensity: 0.2,
-        roughness: 0.8,
+        color: new THREE.Color('#8a1523'),
+        emissive: new THREE.Color('#380810'),
+        emissiveIntensity: 0.32,
+        roughness: 0.58,
         metalness: 0.05,
       });
     }
@@ -66,20 +67,18 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
     // Recliner rows (H & I) - luxury burgundy velvet
     if (isRecliner) {
       return new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#8b293d'),
-        emissive: new THREE.Color('#4d101e'),
-        emissiveIntensity: 0.45,
-        roughness: 0.55,
+        color: new THREE.Color('#781e2e'),
+        roughness: 0.65,
         metalness: 0.05,
       });
     }
 
-    // Standard rows (A to G) - classic cinema red velvet
+    // Standard rows (A to G) - classic cinema red velvet matching reference image
     return new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#c8162b'),
-      emissive: new THREE.Color('#6e0c18'),
-      emissiveIntensity: 0.45,
-      roughness: 0.55,
+      color: new THREE.Color('#b8182b'),
+      emissive: new THREE.Color('#4a0a12'),
+      emissiveIntensity: 0.25,
+      roughness: 0.52,
       metalness: 0.05,
     });
   }, [isSelected, isTaken, isHovered, isRecliner]);
@@ -139,21 +138,40 @@ export const AuditoriumSeat: React.FC<AuditoriumSeatProps> = ({
       {/* Plush Backrest (hidden only for currently occupied seat in POV to prevent camera clipping) */}
       {!hideBackrest && (
         <>
-          <mesh position={[0, 0.74, -0.15]} rotation={[-0.05, 0, 0]} material={seatMaterial} castShadow receiveShadow>
-            <boxGeometry args={[0.56, 0.65, 0.12]} />
-          </mesh>
+          <RoundedBox
+            args={[0.58, 0.76, 0.14]}
+            radius={0.06}
+            smoothness={4}
+            position={[0, 0.82, -0.15]}
+            rotation={[-0.05, 0, 0]}
+            material={seatMaterial}
+            castShadow
+            receiveShadow
+          />
 
-          {/* Rounded Headrest */}
-          <mesh position={[0, 1.12, -0.18]} rotation={[-0.05, 0, 0]} material={seatMaterial} castShadow>
-            <boxGeometry args={[0.50, 0.22, 0.11]} />
-          </mesh>
+          {/* Rounded Plush Headrest matching reference image */}
+          <RoundedBox
+            args={[0.56, 0.54, 0.18]}
+            radius={0.10}
+            smoothness={5}
+            position={[0, 1.54, -0.18]}
+            rotation={[-0.05, 0, 0]}
+            material={seatMaterial}
+            castShadow
+          />
         </>
       )}
 
       {/* Seat Cushion */}
-      <mesh position={[0, 0.42, 0.08]} material={seatMaterial} castShadow receiveShadow>
-        <boxGeometry args={[0.54, 0.14, 0.46]} />
-      </mesh>
+      <RoundedBox
+        args={[0.54, 0.14, 0.46]}
+        radius={0.03}
+        smoothness={4}
+        position={[0, 0.42, 0.08]}
+        material={seatMaterial}
+        castShadow
+        receiveShadow
+      />
 
       {/* Left Armrest */}
       <mesh position={[-0.30, 0.58, 0.04]} material={armrestMaterial} castShadow>

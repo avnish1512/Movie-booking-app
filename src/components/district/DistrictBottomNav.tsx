@@ -78,3 +78,4 @@ export const DistrictBottomNav: React.FC<DistrictBottomNavProps> = ({
     </nav>
   );
 };
+

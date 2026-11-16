@@ -94,20 +94,35 @@ export const App: React.FC = () => {
     }
   };
 
-  // Two-Stage Cinematic Transition from 2D Map to 3D Auditorium View
-  const handleContinueTo3D = () => {
-    if (!selectedSeat) return;
+  // Cinematic Transition from 2D Map to 3D Cinema View
+  const handleContinueTo3D = (targetSeat?: SeatData) => {
+    const seatToUse = targetSeat || selectedSeat;
+    if (!seatToUse) return;
+
+    if (targetSeat && targetSeat.id !== selectedSeatId) {
+      setSelectedSeatId(targetSeat.id);
+    }
     soundFX.playTransition();
 
-    // Stage 1: Auditorium view behind the seat (reveals the glowing green seat & descending hall)
+    // Direct cinematic swoop into Seated POV matching reference image
     setViewMode('transitioning');
-    setCameraPerspective('auditorium');
+    setCameraPerspective('pov');
 
-    // Stage 2: Smooth swoop forward into Seated POV and slide bottom sheet up
     setTimeout(() => {
       setViewMode('view3d');
-      setCameraPerspective('pov');
-    }, 750);
+    }, 400);
+  };
+
+  // Dedicated seat selection from 2D Map: clicking any seat triggers the cinema 3D effect!
+  const handleSeatSelectFromMap = (seat: SeatData) => {
+    if (seat.status === 'taken') return;
+    setSelectedSeatId(seat.id);
+    soundFX.playSeatClick();
+
+    // Smooth swoop into the 3D cinema effect matching reference image
+    setTimeout(() => {
+      handleContinueTo3D(seat);
+    }, 240);
   };
 
   // Toggle camera perspective between Seated POV and Auditorium Hall Overview
@@ -310,7 +325,7 @@ export const App: React.FC = () => {
                   <SeatMap
                     seats={seats}
                     selectedSeatId={selectedSeatId}
-                    onSeatSelect={handleSeatSelect}
+                    onSeatSelect={handleSeatSelectFromMap}
                   />
                 </div>
 
@@ -319,8 +334,8 @@ export const App: React.FC = () => {
                   viewMode="map"
                   selectedSeat={selectedSeat}
                   seats={seats}
-                  onSeatSelect={handleSeatSelect}
-                  onContinue={handleContinueTo3D}
+                  onSeatSelect={handleSeatSelectFromMap}
+                  onContinue={() => handleContinueTo3D()}
                   onChangeSeat={handleChangeSeat}
                   onBook={handleProceedToFnb}
                 />

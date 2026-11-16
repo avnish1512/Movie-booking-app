@@ -110,7 +110,7 @@ export const CinemaAuditorium: React.FC<CinemaAuditoriumProps> = ({
         const isTaken = seat.status === 'taken';
         const isRecliner = seat.type === 'recliner';
 
-        const hideBackrest = isSelected && viewMode === 'view3d' && cameraPerspective === 'pov';
+        const hideBackrest = isSelected && (viewMode === 'view3d' || viewMode === 'transitioning') && cameraPerspective === 'pov';
 
         return (
           <AuditoriumSeat
